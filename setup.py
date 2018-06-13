@@ -14,6 +14,7 @@ setuptools.setup(
     long_description=long_description,
     url="https://github.com/EdMan1022/pyketo.git",
     packages=packages,
+    install_requires=["requests"],
     classifiers=(
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

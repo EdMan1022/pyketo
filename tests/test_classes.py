@@ -1,10 +1,12 @@
 from . import BaseTestClass
 
-from pyketo.auth import Auth
+from pyketo import (
+    Auth,
+    Session
+)
 
 
 class TestAuth(BaseTestClass):
-
     target_path = 'pyketo.auth'
 
     def setUp(self):
