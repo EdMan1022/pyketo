@@ -1,5 +1,7 @@
 from . import BaseTestClass
 
+from pyketo.auth import Auth
+
 
 class TestAuth(BaseTestClass):
 
