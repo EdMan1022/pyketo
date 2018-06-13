@@ -58,9 +58,10 @@ class TestSession(BaseOAuthTest):
     def test_init(self):
         self.assertIsInstance(self.session, Session)
 
-    def test_refresh_auth_token(self):
+    def test_get_auth_token(self):
         """
         If the marketo API returns the correct response, initialize a token
+
         :return:
         """
 
@@ -76,3 +77,43 @@ class TestSession(BaseOAuthTest):
 
         self.session.refresh_auth_token()
         self.assertIsInstance(self.session.auth, Auth)
+
+    def test_refresh_auth_token(self):
+        """
+        Tests that refreshing the access token results in a new auth token,
+        more recent than the old one
+
+        :return:
+        """
+        self.mock_response.json = mock.MagicMock()
+        self.mock_response.json.return_value = {
+            "access_token": '1',
+            "token_type": self.token_type,
+            "expires_in": self.expires_in,
+            "scope": self.scope
+        }
+
+        # Refresh first token
+        self.session.refresh_auth_token()
+
+        # Record token values
+        old_token = self.session.auth
+
+        # Change the mocked_response token value
+        self.mock_response.json.return_value['access_token'] = '2'
+
+        # Get a new token
+        self.session.refresh_auth_token()
+        new_token = self.session.auth
+
+        # Assert the tokens are different
+        self.assertNotEqual(new_token.access_token, old_token.access_token)
+
+        # Assert that the old token was created before the new token
+        self.assertLess(old_token.created_at, new_token.created_at)
+
+        # Assert that the old token expires before the new token
+        self.assertLess(old_token.expires_at, new_token.expires_at)
+
+
+
