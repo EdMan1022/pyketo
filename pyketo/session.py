@@ -12,9 +12,11 @@ class Session(object):
     """
 
     refresh_token_url = "oauth/token"
+    header_key = 'headers'
+    access_token_key = 'Authorization'
 
     def __init__(self, base_url: str, identity_url: str, client_id: str,
-                 client_secret: str):
+                 client_secret: str, auto_base: bool=True):
 
         self._auth = None
 
@@ -22,6 +24,7 @@ class Session(object):
         self.identity_url = identity_url
         self.client_id = client_id
         self.client_secret = client_secret
+        self.auto_base = auto_base
 
     def refresh_auth_token(self):
         """
@@ -58,3 +61,22 @@ class Session(object):
             self.refresh_auth_token()
 
         return self._auth
+
+    @property
+    def auth_header(self):
+        return "{} {}".format(self.auth.type, self.auth.access_token)
+
+    def _http_request(self, *args, **kwargs):
+        if kwargs.get(self.header_key):
+            kwargs[self.header_key][self.access_token_key] = \
+                self.auth_header
+        else:
+            kwargs[self.header_key] = \
+                {self.access_token_key: self.auth_header}
+        return args, kwargs
+
+    def get(self, *args, **kwargs):
+        args, kwargs = self._http_request(*args, **kwargs)
+        return requests.get(*args, **kwargs)
+
+

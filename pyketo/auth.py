@@ -16,6 +16,7 @@ class Auth(object):
         self.token_type = token_type
         self.expires_in = expires_in
         self.scope = scope
+        self.type = 'Bearer'
 
         if self.expires_in <= self.buffer_time:
             raise ValueError(
