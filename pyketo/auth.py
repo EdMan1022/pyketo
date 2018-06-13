@@ -8,7 +8,7 @@ class Auth(object):
 
     # Subtract buffer from expiration limit when calculating the expiration time
     # to prevent letting the token expire because of network time losses
-    buffer_time = 10
+    buffer_time = 60
 
     def __init__(self, access_token: str, token_type: str, expires_in: int,
                  scope: str):
@@ -28,3 +28,11 @@ class Auth(object):
         self.expires_at = self.created_at - datetime.timedelta(
             seconds=(self.expires_in - self.buffer_time)
         )
+
+    def expired(self):
+        """
+        Checks if the auth token is expired or not
+
+        :return: (Bool) True if expired, False if not
+        """
+        return self.expires_at > datetime.datetime.now()

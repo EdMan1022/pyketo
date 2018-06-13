@@ -15,7 +15,8 @@ class Session(object):
 
     def __init__(self, base_url: str, identity_url: str, client_id: str,
                  client_secret: str):
-        self.auth = None
+
+        self._auth = None
 
         self.base_url = base_url
         self.identity_url = identity_url
@@ -45,5 +46,15 @@ class Session(object):
         )
 
         # Initialize a new Auth instance using the response
-        self.auth = Auth(**auth_response.json())
+        self._auth = Auth(**auth_response.json())
 
+    @property
+    def auth(self):
+
+        if not self._auth:
+            self.refresh_auth_token()
+
+        elif self._auth.expired():
+            self.refresh_auth_token()
+
+        return self._auth

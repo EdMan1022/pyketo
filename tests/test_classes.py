@@ -14,7 +14,7 @@ class BaseOAuthTest(BaseTestClass):
         super(BaseOAuthTest, self).setUp()
         self.access_token = 'test'
         self.token_type = 'test'
-        self.expires_in = 40
+        self.expires_in = 3599
         self.scope = 'test'
 
         self.test_base_url = 'test'
@@ -114,6 +114,5 @@ class TestSession(BaseOAuthTest):
 
         # Assert that the old token expires before the new token
         self.assertLess(old_token.expires_at, new_token.expires_at)
-
 
 
