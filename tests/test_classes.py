@@ -1,3 +1,5 @@
+from unittest import mock
+
 from . import BaseTestClass
 
 from pyketo import (
@@ -6,14 +8,26 @@ from pyketo import (
 )
 
 
-class TestAuth(BaseTestClass):
-    target_path = 'pyketo.auth'
+class BaseOAuthTest(BaseTestClass):
 
     def setUp(self):
+        super(BaseOAuthTest, self).setUp()
         self.access_token = 'test'
         self.token_type = 'test'
         self.expires_in = 40
         self.scope = 'test'
+
+        self.test_base_url = 'test'
+        self.test_identity_url = 'test'
+        self.test_client_id = 'test'
+        self.test_client_secret = 'test'
+
+
+class TestAuth(BaseOAuthTest):
+    target_path = 'pyketo.auth'
+
+    def setUp(self):
+        super(TestAuth, self).setUp()
 
     def test_init(self):
         auth = Auth(self.access_token, self.token_type, self.expires_in,
@@ -24,17 +38,18 @@ class TestAuth(BaseTestClass):
             Auth(self.access_token, self.token_type, 10, self.scope)
 
 
-class TestSession(BaseTestClass):
+class TestSession(BaseOAuthTest):
     target_path = 'pyketo.session'
 
     def setUp(self):
+        super(TestSession, self).setUp()
         self.requests_patch = self.create_patch('requests')
 
-        self.test_identity_url = 'test'
-        self.test_client_id = 'test'
-        self.test_client_secret = 'test'
+        self.mock_response = mock.MagicMock()
+        self.requests_patch.get.return_value = self.mock_response
 
         self.session = Session(
+            self.test_base_url,
             self.test_identity_url,
             self.test_client_id,
             self.test_client_secret
@@ -44,9 +59,20 @@ class TestSession(BaseTestClass):
         self.assertIsInstance(self.session, Session)
 
     def test_refresh_auth_token(self):
-        old_token = self.session.auth.token
-        old_token_created = self.session.auth.created_time
-        self.session.refresh_auth_token()
-        new_token = self.session.auth.token
+        """
+        If the marketo API returns the correct response, initialize a token
+        :return:
+        """
 
-        self.assertNotEqual(old_token, new_token)
+        # Set the mock_response to contain data required to create an auth
+        # object
+        self.mock_response.json = mock.MagicMock()
+        self.mock_response.json.return_value = {
+            "access_token": self.access_token,
+            "token_type": self.token_type,
+            "expires_in": self.expires_in,
+            "scope": self.scope
+        }
+
+        self.session.refresh_auth_token()
+        self.assertIsInstance(self.session.auth, Auth)

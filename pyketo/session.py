@@ -11,7 +11,13 @@ class Session(object):
     refreshing if it runs out
     """
 
-    def __init__(self, identity_url: str, client_id: str, client_secret: str):
+    refresh_token_url = "oauth/token"
+
+    def __init__(self, base_url: str, identity_url: str, client_id: str,
+                 client_secret: str):
+        self.auth = None
+
+        self.base_url = base_url
         self.identity_url = identity_url
         self.client_id = client_id
         self.client_secret = client_secret
@@ -24,4 +30,20 @@ class Session(object):
         and if the token reaches the end of its lifespan
         :return: None
         """
-        pass
+
+        # Set up the parameters needed to refresh the API token
+        auth_token_params = {
+            "grant_type": "client_credentials",
+            "client_id": self.client_id,
+            "client_secret": self.client_secret
+        }
+
+        # Use the requests package to make the refresh request
+        auth_response = requests.get(
+            url="{}/{}".format(self.identity_url, self.refresh_token_url),
+            params=auth_token_params
+        )
+
+        # Initialize a new Auth instance using the response
+        self.auth = Auth(**auth_response.json())
+
