@@ -14,9 +14,10 @@ class Session(object):
     refresh_token_url = "oauth/token"
     header_key = 'headers'
     access_token_key = 'Authorization'
+    url_key = 'url'
 
     def __init__(self, base_url: str, identity_url: str, client_id: str,
-                 client_secret: str, auto_base: bool=True):
+                 client_secret: str, auto_base: bool=True, version: int=1):
 
         self._auth = None
 
@@ -25,6 +26,8 @@ class Session(object):
         self.client_id = client_id
         self.client_secret = client_secret
         self.auto_base = auto_base
+
+        self.rest_base = "{}/rest/v{}".format(self.base_url, version)
 
     def refresh_auth_token(self):
         """
@@ -66,7 +69,18 @@ class Session(object):
     def auth_header(self):
         return "{} {}".format(self.auth.type, self.auth.access_token)
 
-    def _http_request(self, *args, **kwargs):
+    def _http_request(self, url, *args, **kwargs):
+
+        if self.auto_base:
+            # If the passed url is missing a leading slash, add one
+            if url[0] != '/':
+                url = '/' + url
+
+            updated_url = "{}{}".format(self.rest_base, url)
+            kwargs[self.url_key] = updated_url
+        else:
+            kwargs[self.url_key] = url
+
         if kwargs.get(self.header_key):
             kwargs[self.header_key][self.access_token_key] = \
                 self.auth_header
@@ -75,8 +89,18 @@ class Session(object):
                 {self.access_token_key: self.auth_header}
         return args, kwargs
 
-    def get(self, *args, **kwargs):
-        args, kwargs = self._http_request(*args, **kwargs)
+    def get(self, url, *args, **kwargs):
+        args, kwargs = self._http_request(url, *args, **kwargs)
         return requests.get(*args, **kwargs)
 
+    def post(self, url, *args, **kwargs):
+        args, kwargs = self._http_request(url, *args, **kwargs)
+        return requests.post(*args, **kwargs)
 
+    def put(self, url, *args, **kwargs):
+        args, kwargs = self._http_request(url, *args, **kwargs)
+        return requests.put(*args, **kwargs)
+
+    def delete(self, url, *args, **kwargs):
+        args, kwargs = self._http_request(url, *args, **kwargs)
+        return requests.delete(*args, **kwargs)
